@@ -312,6 +312,22 @@ cdef class ZFS(object):
             pool.nvlist = NVList(otherdict=config)
             yield pool
 
+    def find_import_cached(self, cache_file, pool_name=None, pool_guid=0):
+        cdef ZFSImportablePool pool
+        cdef nvpair.nvlist_t* result
+
+        result = libzfs.zpool_find_import_cached(self.handle, cache_file, pool_name, pool_guid)
+        if result is NULL:
+            return
+
+        nv = NVList(nvlist=<uintptr_t>result)
+        for name, config in nv.items():
+            pool = ZFSImportablePool.__new__(ZFSImportablePool)
+            pool.name = name
+            pool.free = False
+            pool.nvlist = NVList(otherdict=config)
+            yield pool
+
     def import_pool(self, ZFSImportablePool pool, newname, opts):
         cdef NVList copts = NVList(otherdict=opts)
         
